@@ -1,0 +1,18 @@
+# ILI9325 display driver configuration options
+
+# Copyright (c) 2024 Andrea Merello <andrea.merello@gmail.com>
+
+# Based on Kconfig.ili9xxx which is:
+#  Copyright (c) 2017 Jan Van Winkel <jan.van_winkel@dxplore.eu>
+#  Copyright (c) 2020 Teslabs Engineering S.L.
+#  Copyright (c) 2021 Krivorot Oleg <krivorot.oleg@gmail.com>
+
+# SPDX-License-Identifier: Apache-2.0
+
+config ILI9325
+	bool "ILI9325 display driver"
+	default y
+	depends on DT_HAS_ILITEK_ILI9325_ENABLED
+	select MIPI_DBI
+	help
+	  Enable driver for ILI9325 display driver.

@@ -1,0 +1,11 @@
+# Copyright (c) 2024, Andrea Merello <andrea.merello@gmail.com>
+# Based on ilitek,ili9340.yaml which is:
+#  Copyright (c) 2018, Jan Van Winkel <jan.van_winkel@dxplore.eu>
+#  Copyright (c) 2020, Teslabs Engineering S.L.
+# SPDX-License-Identifier: Apache-2.0
+
+description: ILI9325 display controllers common properties.
+
+include: [mipi-dbi-spi-device.yaml, display-controller.yaml]
+
+compatible: "ilitek,ili9325"
