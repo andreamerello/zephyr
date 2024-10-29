@@ -270,7 +270,10 @@ static const struct display_driver_api ili9325_api = {
 
 #define ILI9325(id) 		                                               \
 	static const struct ili9325_config ili9325_config_##id = {             \
-		.mipi_dev = DEVICE_DT_GET(DT_INST_PARENT(id)),		\
+		.mipi_dev = DEVICE_DT_GET(DT_INST_PARENT(id)),		      \
+		.dbi_config = {                                                \
+			.mode = MIPI_DBI_MODE_8080_BUS_16_BIT        	\
+		},                                                             \
 	};                                                                     \
 									       \
 	static struct ili9325_data ili9325_data_##id;                           \
