@@ -89,7 +89,7 @@ static int mipi_dbi_bitbang_write_helper(const struct device *dev,
 	const struct mipi_dbi_bitbang_config *config = dev->config;
 	struct mipi_dbi_bitbang_data *data = dev->data;
 	int ret = 0;
-	uint8_t value;
+	uint16_t value;
 
 	ret = k_mutex_lock(&data->lock, K_FOREVER);
 	if (ret < 0) {
@@ -111,6 +111,10 @@ static int mipi_dbi_bitbang_write_helper(const struct device *dev,
 			gpio_pin_set_dt(&config->cmd_data, 1);
 			while (len > 0) {
 				value = *(data_buf++);
+				if (config->data_bus_width > 8) {
+					value |= ((uint16_t)(*(data_buf++))) << 8;
+					len--;
+				}
 				gpio_pin_set_dt(&config->wr, 0);
 				mipi_dbi_bitbang_set_data_gpios(config, data, value);
 				gpio_pin_set_dt(&config->wr, 1);
