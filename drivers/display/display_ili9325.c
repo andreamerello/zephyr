@@ -245,16 +245,15 @@ static int ili9325_init(const struct device *dev)
 
 	ret = ili9325_reg_read(dev, 0x0, &val);
 	if (ret < 0) {
-		LOG_ERR("Could not read ID reg (%d)", ret);
-		return ret;
-	}
+		LOG_WRN("Could not read ID reg (%d)", ret);
+	} else {
+		if (val != 0x9325 && val != 0x9328) {
+			LOG_ERR("Invalid device ID 0x(%x)", val);
+			return -ENODEV;
+		}
 
-	if (val != 0x9325 && val != 0x9328) {
-		LOG_ERR("Invalid device ID 0x(%x)", val);
-		return -ENODEV;
+		LOG_INF("Display detected (0x%x)", val);
 	}
-
-	LOG_INF("Display detected (0x%x)", val);
 
 	ret = ili9325_configure(dev);
 	if (ret < 0) {
