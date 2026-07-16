@@ -75,6 +75,7 @@ struct esp32_wifi_runtime {
 	scan_result_cb_t scan_cb;
 	uint8_t state;
 	uint8_t ap_connection_cnt;
+	struct k_sem tx_done_sem;
 };
 
 static struct net_mgmt_event_callback esp32_dhcp_cb;
@@ -89,6 +90,28 @@ static void wifi_event_handler(struct net_mgmt_event_callback *cb, uint64_t mgmt
 	default:
 		break;
 	}
+}
+
+static void esp32_wifi_tx_done(uint8_t ifidx, uint8_t *data,
+			       uint16_t *data_len, bool status)
+{
+#if defined(CONFIG_ESP32_WIFI_AP_STA_MODE)
+	struct esp32_wifi_runtime *runtime_data = &esp32_ap_sta_data;
+#else
+	struct esp32_wifi_runtime *runtime_data = &esp32_data;
+#endif
+
+	k_sem_give(&runtime_data->tx_done_sem);
+}
+
+static int esp32_wifi_start(void)
+{
+	int ret;
+
+	ret = esp_wifi_start();
+	if (ret)
+		return ret;
+	return esp_wifi_set_tx_done_cb(esp32_wifi_tx_done);
 }
 
 static int esp32_wifi_send(const struct device *dev, struct net_pkt *pkt)
@@ -107,8 +130,9 @@ static int esp32_wifi_send(const struct device *dev, struct net_pkt *pkt)
 	}
 
 	/* Enqueue packet for transmission */
-	if (esp_wifi_internal_tx(ifx, (void *)data->frame_buf, pkt_len) != ESP_OK) {
-		goto out;
+	k_sem_take(&data->tx_done_sem, K_NO_WAIT);
+	while (esp_wifi_internal_tx(ifx, (void *)data->frame_buf, pkt_len) != ESP_OK) {
+		k_sem_take(&data->tx_done_sem, K_FOREVER);
 	}
 
 #if defined(CONFIG_NET_STATISTICS_WIFI)
@@ -514,7 +538,7 @@ static int esp32_wifi_connect(const struct device *dev,
 		LOG_ERR("Failed to set Wi-Fi mode (%d)", ret);
 		return -EAGAIN;
 	}
-	ret = esp_wifi_start();
+	ret = esp32_wifi_start();
 	if (ret) {
 		LOG_ERR("Failed to start Wi-Fi driver (%d)", ret);
 		return -EAGAIN;
@@ -640,7 +664,7 @@ static int esp32_wifi_scan(const struct device *dev, struct wifi_scan_params *pa
 		return -EINVAL;
 	}
 
-	ret = esp_wifi_start();
+	ret = esp32_wifi_start();
 	if (ret) {
 		LOG_ERR("Failed to start Wi-Fi driver (%d)", ret);
 		return -EAGAIN;
@@ -715,7 +739,7 @@ static int esp32_wifi_ap_enable(const struct device *dev,
 		return -EINVAL;
 	}
 
-	err = esp_wifi_start();
+	err = esp32_wifi_start();
 	if (err) {
 		LOG_ERR("Failed to enable Wi-Fi AP mode");
 		return -EAGAIN;
@@ -732,7 +756,7 @@ static int esp32_wifi_ap_disable(const struct device *dev)
 	esp_wifi_get_mode(&mode);
 	if (mode == ESP32_WIFI_MODE_APSTA) {
 		err = esp_wifi_set_mode(ESP32_WIFI_MODE_STA);
-		err |= esp_wifi_start();
+		err |= esp32_wifi_start();
 	} else {
 		err = esp_wifi_stop();
 	}
@@ -854,6 +878,7 @@ static void esp32_wifi_init(struct net_if *iface)
 
 	eth_ctx->eth_if_type = L2_ETH_IF_TYPE_WIFI;
 
+	k_sem_init(&dev_data->tx_done_sem, 0, 1);
 #if defined(CONFIG_ESP32_WIFI_AP_STA_MODE)
 	struct wifi_nm_instance *nm = wifi_nm_get_instance("esp32_wifi_nm");
 
@@ -892,6 +917,7 @@ static void esp32_wifi_init_ap(struct net_if *iface)
 
 	eth_ctx->eth_if_type = L2_ETH_IF_TYPE_WIFI;
 
+	k_sem_init(&data->tx_done_sem, 0, 1);
 	struct wifi_nm_instance *nm = wifi_nm_get_instance("esp32_wifi_nm");
 
 	esp32_wifi_iface_ap = iface;
