@@ -49,7 +49,7 @@ LOG_MODULE_REGISTER(display_ili9325, CONFIG_DISPLAY_LOG_LEVEL);
 #define ILI9325_REG_V_END        0x53
 
 /* BGR=1, I/D=11 (incrementa H e V), AM=1 (aggiorna prima in verticale) */
-#define ILI9325_ENTRY_MODE ((1 << 12) | (3 << 4) | (1 << 3))
+#define ILI9325_ENTRY_MODE ((3 << 4) | (1 << 3))
 
 struct ili9325_data {
 	int dummy;
@@ -194,7 +194,7 @@ static void ili9325_get_capabilities(const struct device *dev,
 static const uint16_t reg_magic[][2] = {
 	{0x00e7, 0x0010},
 	{0x0000, 0x0001},
-	{0x0001, 0x0100},
+	{0x0001, 0x0000},
 	{0x0002, 0x0700},
 	{ILI9325_REG_ENTRY_MODE, ILI9325_ENTRY_MODE},
 	{0x0004, 0x0000},
