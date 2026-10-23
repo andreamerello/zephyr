@@ -1,3 +1,6 @@
+#include <zephyr/sys/byteorder.h>
+
+
 /*
  * Copyright (c) 2024 Andrea Merello <andrea.merello@gmail.com>
  *
@@ -30,7 +33,7 @@ struct ili9325_data {
 static int ili9325_reg_write(const struct device *dev, uint8_t reg, uint16_t val)
 {
 	const struct ili9325_config *config = dev->config;
-	val = sys_cpu_to_be16(val);
+	//val = sys_cpu_to_be16(val);
 	return mipi_dbi_command_write(config->mipi_dev, &config->dbi_config,
 				      reg, (uint8_t *)(&val), 2);
 }
@@ -42,10 +45,10 @@ static int ili9325_reg_read(const struct device *dev, uint8_t reg, uint16_t *val
 	int ret;
 
 	ret = mipi_dbi_command_read(config->mipi_dev, &config->dbi_config,
-				    &reg, 1, (uint8_t *)(&val16), 2);
+				    &reg, 1, (uint8_t *)(val), 2);
 	if (ret < 0)
 		return ret;
-	*val = sys_be16_to_cpu(val16);
+	//*val = sys_be16_to_cpu(val16);
 	return 0;
 }
 
