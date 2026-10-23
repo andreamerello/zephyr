@@ -342,7 +342,10 @@ manifest:
     - name: zcbor
       revision: 47f34dd7f5284e8750b5a715dee7f77c6c5bdc3f
       path: modules/lib/zcbor
-
+    - name: sensirion_drivers
+      path: modules/sensirion_drivers
+      url: https://github.com/nobodyguy/sensirion_zephyr_drivers
+      revision: main
   self:
     path: zephyr
     west-commands: scripts/west-commands.yml
